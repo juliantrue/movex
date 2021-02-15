@@ -1,0 +1,28 @@
+app:
+  #mot16_eval:
+  #  path_to_mot_dir: "data"
+  #  results_dir: "results"
+
+  mot16_trace:
+    path_to_mot_trace_dir: "data/MOT16-02" 
+    results_dir: "results"
+
+move_config:
+  # bypass: False 
+  dnn:
+    simulator:
+      latency_in_ms: 200
+
+  # TODO: implement ability to run on live DNN
+  # live:
+  #  triton_endpoint: 
+
+  deep_sort:
+    nn_budget: 128
+    max_cosine_distance: 0.3
+    nms_max_overlap: 1.0
+    min_confidence: 0.5
+    max_iou_distance: 0.7
+    n_init: 2
+
+  # TODO: More trackers
