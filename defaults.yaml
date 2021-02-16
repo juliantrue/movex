@@ -6,6 +6,7 @@ app:
   mot16_trace:
     path_to_mot_trace_dir: "data/MOT16-02" 
     results_dir: "results"
+    log_run_times: True
 
 move_config:
   # bypass: False 

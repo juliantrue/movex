@@ -1,9 +1,7 @@
 import numpy as np
-
 from accumulator import collect_run_time
 
 
-@collect_run_time
 def crop_mvs_to_bbox(mvs, bbox):
     where_src_x = np.logical_and(bbox[0] <= mvs[:, 0], mvs[:, 0] <= bbox[2])
     where_src_y = np.logical_and(bbox[1] <= mvs[:, 1], mvs[:, 1] <= bbox[3])

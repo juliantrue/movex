@@ -1,8 +1,9 @@
-import os
+import sys, os
 import time
 import queue
 import av
 import cv2
+import pickle
 from fig import Config as C
 from tqdm import tqdm
 
@@ -14,7 +15,7 @@ from movex import MOTClient, extract_mvs, apply_mvs, apply_queue_of_mvs
 def run_mot16_eval(path_to_mot_dir, path_to_results_dir):
     for mot_trace_dir in os.listdir(path_to_mot_dir):
         path_to_trace_dir = os.path.join(path_to_mot_dir, mot_trace_dir)
-        run_mot16_trace(path_to_trace_dir, path_to_results_dir)
+        run_data = run_mot16_trace(path_to_trace_dir, path_to_results_dir)
 
 
 def run_mot16_trace(path_to_trace_dir, path_to_results_dir):
@@ -34,10 +35,13 @@ def run_mot16_trace(path_to_trace_dir, path_to_results_dir):
 
     print(f"Running tracking on {trace_name}.")
     run_data = run_tracking(video_source, detection_source)
-    print(f"Average loop time: {run_data['statistics']['avg_loop_time'] *1000}ms")
+    run_data["trace_name"] = trace_name
 
     path_to_results_file = os.path.join(path_to_results_dir, trace_name + ".txt")
+    path_to_run_data_file = os.path.join(path_to_results_dir, trace_name + ".metadata")
     write_results_to_results_dir(run_data["results"], path_to_results_file)
+    write_run_data_to_dir(run_data["results"], path_to_run_data_file)
+    return run_data
 
 
 def read_video_source_and_set_read_settings(path_to_video):
@@ -58,22 +62,22 @@ def run_tracking(video_source, detection_source):
         C.move_config_deep_sort_max_iou_distance,
         C.move_config_deep_sort_n_init,
     )
+    acc = Accumulator()
+    acc.register(extract_mvs)
+    acc.register(apply_queue_of_mvs)
+    acc.register(apply_mvs)
+    run_data = {
+        "results": [],
+        "statistics": {
+            "avg_loop_time": [],
+            "debugging": acc,
+        },
+    }
 
     first_frame = True
     curr_mvs = None
     curr_bboxes = None
     mvs_buffer = queue.Queue()
-    run_data = {
-        "results": [],
-        "statistics": {
-            "avg_loop_time": [],
-            "debugging": Accumulator().register(
-                extract_mvs, apply_mvs, apply_queue_of_mvs
-            ),
-        },
-    }
-
-    print(extract_mvs.accumulator)
     for i, frame in tqdm(enumerate(video_source.decode(video=0))):
         img = unpack_frame_to_img(frame)
 
@@ -114,8 +118,6 @@ def run_tracking(video_source, detection_source):
                     tracked_bboxes[j][3],
                 ]
             )
-        run_data["statistics"]["debugging"].show()
-        exit()
 
     run_data["statistics"] = post_process_statistics(run_data["statistics"])
     return run_data
@@ -129,6 +131,8 @@ def unpack_frame_to_img(frame):
 
 def post_process_statistics(statistics):
     avg_loop_time = sum(statistics["avg_loop_time"]) / len(statistics["avg_loop_time"])
+    statistics["avg_loop_time"] = avg_loop_time
+    return avg_loop_time
 
 
 def write_results_to_results_dir(results, path_to_results_file):
@@ -144,3 +148,41 @@ def write_results_to_results_dir(results, path_to_results_file):
                 % (row[0], row[1], row[2], row[3], row[4], row[5]),
                 file=f,
             )
+
+
+def write_run_data_to_dir(run_data, path_to_results_file):
+    results_dir = os.path.split(path_to_results_file)[0]
+    if not os.path.exists(results_dir):
+        os.makedirs(results_dir)
+
+    with open(path_to_results_file, "wb") as f:
+        pickle.dump(run_data, f)
+
+
+def display_eval_metadata():
+    folder = sys.argv[1]
+    print(f"Displaying run statistic for: {folder}")
+    avg_loop_time = compute_eval_metadata(folder)
+    print(f"Average Loop Time: {avg_loop_time*1000}ms")
+
+
+def compute_eval_metadata(path_to_results_dir):
+    avg_avg_loop_time = []
+    for result_file in os.listdir(path_to_results_dir):
+        if result_file.split(".")[-1] == "metadata":
+            path_to_metadata_file = os.path.join(path_to_results_dir, result_file)
+            run_data = parse_metadata_file(path_to_metadata_file)
+            avg_avg_loop_time.append(run_data["statistics"]["avg_loop_time"])
+
+    return sum(avg_avg_loop_time) / len(avg_avg_loop_time)
+
+
+def parse_metadata_file(path_to_metadata_file):
+    with open(path_to_metadata_file, "rb") as f:
+        run_data = pickle.load(f)
+
+    return run_data
+
+
+if __name__ == "__main__":
+    display_eval_metadata()
