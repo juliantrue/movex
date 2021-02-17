@@ -21,7 +21,6 @@ RUN pip3 install \
       av \
       numpy \
       scipy \
-      maturin \
       motmetrics \
       opencv-python==4.4.0.44 \
       tqdm

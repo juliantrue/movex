@@ -2,3 +2,5 @@ __pycache__
 results
 deepsort/checkpoints/*
 data
+movexo3/target
+movexo3/movexo3.so

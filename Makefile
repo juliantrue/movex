@@ -24,3 +24,10 @@ run:
 eval:
 	python3 -u -m motmetrics.apps.eval_motchallenge /MOT16/train ./results/ --fmt mot16
 	# python3 evaluate.py ./results
+
+
+.PHONY: build-rs
+build-rs:
+	cd movexo3 && \
+	cargo build --release && \
+	ln -s -f target/release/libmovexo3.so movexo3.so
