@@ -1,5 +1,7 @@
+import time
 import numpy as np
 from accumulator import collect_run_time
+from movexo3 import mvs_to_list
 
 
 def crop_mvs_to_bbox(mvs, bbox):
@@ -84,6 +86,7 @@ def extract_mvs(frame):
     if len(curr_mvs) > 0:
         curr_mvs = curr_mvs[0]
 
+        last = time.perf_counter()
         # TODO: This line is expensive. Consider being smarter here
         # https://github.com/FFmpeg/FFmpeg/blob/a0ac49e38ee1d1011c394d7be67d0f08b2281526/libavutil/motion_vector.h
         # Motion Vector:
@@ -103,6 +106,10 @@ def extract_mvs(frame):
                 for curr in curr_mvs
             ]
         )
+
+        # curr_mvs = np.array(mvs_to_list(curr_mvs.to_ndarray()))
+        now = time.perf_counter()
+        # print(f"{(now-last)*1000}ms")
 
     else:
         curr_mvs = np.array([])
