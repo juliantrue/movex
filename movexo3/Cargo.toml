@@ -5,8 +5,6 @@ authors = ["Julian True <julian.allan.true@gmail.com>"]
 edition = "2018"
 publish = false
 
-[dependencies]
-rayon = "*"
 
 [dependencies.pyo3]
 version = "0.13.2"

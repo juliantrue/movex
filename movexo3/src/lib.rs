@@ -3,7 +3,6 @@ use std::time::Instant;
 use pyo3::prelude::*;
 use pyo3::wrap_pyfunction;
 
-use rayon::prelude::*;
 
 #[derive(FromPyObject)]
 struct MotionVectior {
