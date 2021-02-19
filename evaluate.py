@@ -13,9 +13,19 @@ from movex import MOTClient, extract_mvs, apply_mvs, apply_queue_of_mvs
 
 
 def run_mot16_eval(path_to_mot_dir, path_to_results_dir):
+    subset = [
+        "MOT16-02",
+        "MOT16-09",
+        "MOT16-11",
+        "MOT16-04",
+        "MOT16-05",
+        "MOT16-10",
+        "MOT16-13",
+    ]
     for mot_trace_dir in os.listdir(path_to_mot_dir):
-        path_to_trace_dir = os.path.join(path_to_mot_dir, mot_trace_dir)
-        run_data = run_mot16_trace(path_to_trace_dir, path_to_results_dir)
+        if mot_trace_dir in subset:
+            path_to_trace_dir = os.path.join(path_to_mot_dir, mot_trace_dir)
+            run_data = run_mot16_trace(path_to_trace_dir, path_to_results_dir)
 
 
 def run_mot16_trace(path_to_trace_dir, path_to_results_dir):
