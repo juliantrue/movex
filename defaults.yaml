@@ -1,15 +1,16 @@
 app:
-  #mot16_eval:
-  #  path_to_mot_dir: "data"
-  #  results_dir: "results"
-
-  mot16_trace:
-    path_to_mot_trace_dir: "data/MOT16-02" 
+  mot16_eval:
+    path_to_mot_dir: "data"
     results_dir: "results"
-    log_run_times: True
+
+  #mot16_trace:
+  #  path_to_mot_trace_dir: "data/MOT16-02" 
+  #  results_dir: "results"
+  #  log_run_times: True
 
 move_config:
-  # bypass: False 
+  percent_mvs_keep: 0.5
+  bypass: False
   dnn:
     simulator:
       latency_in_ms: 200

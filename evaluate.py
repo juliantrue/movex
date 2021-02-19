@@ -40,7 +40,7 @@ def run_mot16_trace(path_to_trace_dir, path_to_results_dir):
     path_to_results_file = os.path.join(path_to_results_dir, trace_name + ".txt")
     path_to_run_data_file = os.path.join(path_to_results_dir, trace_name + ".metadata")
     write_results_to_results_dir(run_data["results"], path_to_results_file)
-    write_run_data_to_dir(run_data["results"], path_to_run_data_file)
+    write_run_data_to_dir(run_data, path_to_run_data_file)
     return run_data
 
 
@@ -82,22 +82,28 @@ def run_tracking(video_source, detection_source):
         img = unpack_frame_to_img(frame)
 
         loop_last = time.perf_counter()
-        curr_mvs = extract_mvs(frame)
-        mvs_buffer.put(curr_mvs)
 
-        detections = detection_source.poll(i)
-        if first_frame and detections is None:
-            print("Skipping loop iteration until first detections come in.")
-            continue
-
-        elif not first_frame and detections is None:
-            curr_bboxes, mvs = apply_mvs(curr_bboxes, curr_mvs)
+        if C.move_config_bypass:
+            detections = detection_source.await(i)
+            curr_bboxes = detections[0]
 
         else:
-            first_frame = False
-            bboxes = detections[0]
-            bboxes = apply_queue_of_mvs(mvs_buffer, bboxes)
-            curr_bboxes = bboxes.copy()
+            curr_mvs = extract_mvs(frame)
+            mvs_buffer.put(curr_mvs)
+
+            detections = detection_source.poll(i)
+            if first_frame and detections is None:
+                print("Skipping loop iteration until first detections come in.")
+                continue
+
+            elif not first_frame and detections is None:
+                curr_bboxes, mvs = apply_mvs(curr_bboxes, curr_mvs)
+
+            else:
+                first_frame = False
+                bboxes = detections[0]
+                bboxes = apply_queue_of_mvs(mvs_buffer, bboxes)
+                curr_bboxes = bboxes.copy()
 
         curr_scores = [1] * len(curr_bboxes)
         tracked_bboxes, track_ids = tracker.track(
@@ -119,6 +125,7 @@ def run_tracking(video_source, detection_source):
                 ]
             )
 
+    run_data["statistics"]["debugging"].show()
     run_data["statistics"] = post_process_statistics(run_data["statistics"])
     return run_data
 
@@ -132,7 +139,13 @@ def unpack_frame_to_img(frame):
 def post_process_statistics(statistics):
     avg_loop_time = sum(statistics["avg_loop_time"]) / len(statistics["avg_loop_time"])
     statistics["avg_loop_time"] = avg_loop_time
-    return avg_loop_time
+    try:
+        statistics["debugging"] = statistics["debugging"].as_json()
+    except Exception as e:
+        print(e)
+        print("Skipping debugging metric computation.")
+
+    return statistics
 
 
 def write_results_to_results_dir(results, path_to_results_file):
