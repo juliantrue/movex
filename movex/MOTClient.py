@@ -1,3 +1,4 @@
+import time
 import numpy as np
 
 
@@ -8,9 +9,9 @@ class MOTClient(object):
         The MOTClient object implements a configurable latency, so it only returns
         detections for a given call to `poll` if the latency time has elapsed.
         """
-        latency_in_seconds = client_config["latency"] / 1000
+        self._latency_in_seconds = client_config["latency"] / 1000
         self._frames_before_inference = int(
-            latency_in_seconds * client_config["video_fps"]
+            self._latency_in_seconds * client_config["video_fps"]
         )
         self._inference_countdown = self._frames_before_inference
         self._detections = np.load(client_config["path_to_detections"])
@@ -27,6 +28,15 @@ class MOTClient(object):
             detections = None
             self._inference_countdown -= 1
 
+        return detections
+
+    def await(self, frame_idx):
+        last = time.perf_counter()
+        detections = self._create_detections(frame_idx)
+        now = time.perf_counter()
+        created_detections_time = now - last
+
+        time.sleep(self._latency_in_seconds - created_detections_time)
         return detections
 
     def _create_detections(self, frame_idx):

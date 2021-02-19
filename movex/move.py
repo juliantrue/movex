@@ -1,16 +1,8 @@
 import time
 import numpy as np
+from numpy.lib import recfunctions as rfn
 from accumulator import collect_run_time
 from movexo3 import mvs_to_list
-
-
-def crop_mvs_to_bbox(mvs, bbox):
-    where_src_x = np.logical_and(bbox[0] <= mvs[:, 0], mvs[:, 0] <= bbox[2])
-    where_src_y = np.logical_and(bbox[1] <= mvs[:, 1], mvs[:, 1] <= bbox[3])
-    where__x_and_y = np.logical_and(where_src_x, where_src_y)
-    mvs_in_bbox = mvs[where__x_and_y]
-
-    return mvs_in_bbox
 
 
 @collect_run_time
@@ -80,36 +72,51 @@ def apply_mvs(bboxes, mvs, method="median"):
     return out_bboxes, out_mvs
 
 
+def crop_mvs_to_bbox(mvs, bbox):
+    where_src_x = np.logical_and(bbox[0] <= mvs[:, 0], mvs[:, 0] <= bbox[2])
+    where_src_y = np.logical_and(bbox[1] <= mvs[:, 1], mvs[:, 1] <= bbox[3])
+    where__x_and_y = np.logical_and(where_src_x, where_src_y)
+    mvs_in_bbox = mvs[where__x_and_y]
+
+    return mvs_in_bbox
+
+
 @collect_run_time
 def extract_mvs(frame):
     curr_mvs = list(frame.side_data)
     if len(curr_mvs) > 0:
         curr_mvs = curr_mvs[0]
 
-        last = time.perf_counter()
+        # TODO: delete this test crap
+        # tmp_curr_mvs = curr_mvs.to_ndarray()
+        # tmp_mv = tmp_curr_mvs[0]
+        # print("\n")
+        # print(tmp_mv.dtype)
+        # print(type(tmp_mv))
+        # print(dir(tmp_mv))
+        # print("\n")
+
         # TODO: This line is expensive. Consider being smarter here
         # https://github.com/FFmpeg/FFmpeg/blob/a0ac49e38ee1d1011c394d7be67d0f08b2281526/libavutil/motion_vector.h
         # Motion Vector:
         # src_x = dst_x + motion_x / motion_scale
         # src_y = dst_y + motion_x / motion_scale
-        curr_mvs = np.array(
-            [
-                [
-                    curr.src_x,
-                    curr.src_y,
-                    curr.dst_x,
-                    curr.dst_y,
-                    curr.motion_x,
-                    curr.motion_y,
-                    curr.motion_scale,
-                ]
-                for curr in curr_mvs
-            ]
-        )
-
-        # curr_mvs = np.array(mvs_to_list(curr_mvs.to_ndarray()))
-        now = time.perf_counter()
-        # print(f"{(now-last)*1000}ms")
+        # curr_mvs = np.array(
+        #    [
+        #        [
+        #            curr.src_x,
+        #            curr.src_y,
+        #            curr.dst_x,
+        #            curr.dst_y,
+        #            curr.motion_x,
+        #            curr.motion_y,
+        #            curr.motion_scale,
+        #        ]
+        #        for curr in curr_mvs
+        #    ]
+        # )
+        curr_mvs = curr_mvs.to_ndarray()
+        curr_mvs = rfn.structured_to_unstructured(curr_mvs)
 
     else:
         curr_mvs = np.array([])
