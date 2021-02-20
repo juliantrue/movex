@@ -8,16 +8,16 @@ from movexo3 import mvs_to_list
 
 
 @collect_run_time
-def apply_queue_of_mvs(mvs_buffer, bboxes):
+def apply_queue_of_mvs(mvs_buffer, bboxes, method):
     for _ in range(mvs_buffer.qsize()):
         mvs = mvs_buffer.get()
-        bboxes, mvs = apply_mvs(bboxes, mvs)
+        bboxes, mvs = apply_mvs(bboxes, mvs, method)
 
     return bboxes
 
 
 @collect_run_time
-def apply_mvs(bboxes, mvs, method="median"):
+def apply_mvs(bboxes, mvs, method):
     """perturbs bboxes according to update rule
 
     bboxes: [[x, y, width, height]]
@@ -30,28 +30,13 @@ def apply_mvs(bboxes, mvs, method="median"):
     for bbox in bboxes:
         # Get all MVs contained in the bbox
         mvs_in_bbox = crop_mvs_to_bbox(mvs, bbox)
-
-        if len(mvs_in_bbox) == 0:
+        num_mvs, _ = mvs_in_bbox.shape
+        if num_mvs == 0:
             # If there are no mvs in the box?
             motion_xy_by_scale = np.array([0, 0])
 
         else:
-            # Compute the median x motion and median y motion
-            # x and y * motion_scale
-            motion_scale = np.repeat(
-                np.expand_dims(mvs_in_bbox[:, 6], axis=1), 2, axis=1
-            )
-            motion_xy_by_scale = mvs_in_bbox[:, 4:6] / motion_scale
-
-            if method == "median":
-                motion_xy_by_scale = np.median(motion_xy_by_scale, axis=0)
-
-            elif method == "mean":
-                motion_xy_by_scale = np.mean(motion_xy_by_scale, axis=0)
-
-            else:
-                print("Undefined method, using median")
-                motion_xy_by_scale = np.median(motion_xy_by_scale, axis=0)
+            motion_xy_by_scale = filter_bbox_mvs(mvs_in_bbox, method)
 
         # Apply the motion vector to the bbox
         motion_x_by_scale, motion_y_by_scale = motion_xy_by_scale
@@ -59,16 +44,13 @@ def apply_mvs(bboxes, mvs, method="median"):
         # src_x = dst_x + motion_x / motion_scale
         # Solve for dst using above
         # See: https://github.com/FFmpeg/FFmpeg/blob/a0ac49e38ee1d1011c394d7be67d0f08b2281526/libavutil/motion_vector.h
-        out_bboxes.append(
-            (
-                [
-                    bbox[0] - motion_x_by_scale,  # x
-                    bbox[1] - motion_y_by_scale,  # y
-                    bbox[2],  # w
-                    bbox[3],  # h
-                ]
-            )
-        )
+        bbox_to_append = [
+            bbox[0] - motion_x_by_scale,  # x
+            bbox[1] - motion_y_by_scale,  # y
+            bbox[2],  # w
+            bbox[3],  # h
+        ]
+        out_bboxes.append(bbox_to_append)
         out_mvs.append(motion_xy_by_scale)
     return out_bboxes, out_mvs
 
@@ -84,6 +66,39 @@ def crop_mvs_to_bbox(mvs, bbox):
     mvs_in_bbox = mvs[where__x_and_y]
 
     return mvs_in_bbox
+
+
+def filter_bbox_mvs(mvs_in_bbox, method):
+    num_mvs, _ = mvs_in_bbox.shape
+
+    # Compute the median x motion and median y motion
+    # x and y * motion_scale
+    motion_scale = np.repeat(np.expand_dims(mvs_in_bbox[:, 6], axis=1), 2, axis=1)
+    motion_xy_by_scale = mvs_in_bbox[:, 4:6] / motion_scale
+
+    if method == "median":
+        motion_xy_by_scale = np.median(motion_xy_by_scale, axis=0)
+
+    elif method == "mean":
+        motion_xy_by_scale = np.mean(motion_xy_by_scale, axis=0)
+
+    elif method == "alpha_trim":
+        magnitudes = np.linalg.norm(motion_xy_by_scale, axis=1)
+        magnitudes_argsort_idxs = np.argsort(magnitudes, axis=0)
+        motion_xy_by_scale = motion_xy_by_scale[magnitudes_argsort_idxs, :]
+        trim = int((num_mvs * 0.3) // 2)
+        motion_xy_by_scale = motion_xy_by_scale[trim:-trim, :]
+        if len(motion_xy_by_scale) == 0:
+            motion_xy_by_scale = np.array([0, 0])
+
+        else:
+            motion_xy_by_scale = np.median(motion_xy_by_scale, axis=0)
+
+    else:
+        print("Undefined method, using median")
+        motion_xy_by_scale = np.median(motion_xy_by_scale, axis=0)
+
+    return motion_xy_by_scale
 
 
 @collect_run_time

@@ -64,6 +64,7 @@ def run_tracking(video_source, detection_source):
     """Runs tracking with MoVe Extrapolation based on a av.container video source and
     a detection source that implements `poll` behaviour."""
 
+    mv_filter_method = "alpha_trim"
     tracker = DeepSortTracker(
         C.move_config_deep_sort_nn_budget,
         C.move_config_deep_sort_max_cosine_distance,
@@ -107,12 +108,12 @@ def run_tracking(video_source, detection_source):
                 continue
 
             elif not first_frame and detections is None:
-                curr_bboxes, mvs = apply_mvs(curr_bboxes, curr_mvs)
+                curr_bboxes, mvs = apply_mvs(curr_bboxes, curr_mvs, mv_filter_method)
 
             else:
                 first_frame = False
                 bboxes = detections[0]
-                bboxes = apply_queue_of_mvs(mvs_buffer, bboxes)
+                bboxes = apply_queue_of_mvs(mvs_buffer, bboxes, mv_filter_method)
                 curr_bboxes = bboxes.copy()
 
         curr_scores = [1] * len(curr_bboxes)

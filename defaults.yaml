@@ -9,8 +9,9 @@ app:
   #  log_run_times: True
 
 move_config:
-  percent_mvs_keep: 0.5
   bypass: False
+  alpha_trim:
+    alpha: 0.3
   dnn:
     simulator:
       latency_in_ms: 200
