@@ -86,7 +86,7 @@ def filter_bbox_mvs(mvs_in_bbox, method):
         magnitudes = np.linalg.norm(motion_xy_by_scale, axis=1)
         magnitudes_argsort_idxs = np.argsort(magnitudes, axis=0)
         motion_xy_by_scale = motion_xy_by_scale[magnitudes_argsort_idxs, :]
-        trim = int((num_mvs * 0.3) // 2)
+        trim = int((num_mvs * 0.4) // 2)
         motion_xy_by_scale = motion_xy_by_scale[trim:-trim, :]
         if len(motion_xy_by_scale) == 0:
             motion_xy_by_scale = np.array([0, 0])
