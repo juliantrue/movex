@@ -1,6 +1,6 @@
 from fig import Config as C
 
-from evaluate import run_mot_eval, run_mot_trace
+from eval import run_mot_eval, run_mot_trace
 
 
 def main():
