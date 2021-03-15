@@ -24,7 +24,10 @@ RUN pip3 install \
       scipy \
       motmetrics \
       opencv-python==4.4.0.44 \
-      tqdm
+      tqdm \
+      cython \
+      map-boxes
+
 
 COPY third_party/fig-0.1.0-py3-none-any.whl /tmp/fig-0.1.0-py3-none-any.whl
 RUN pip3 install /tmp/fig-0.1.0-py3-none-any.whl

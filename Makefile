@@ -22,7 +22,9 @@ run:
 
 .PHONY: eval
 eval:
-	python3 -u -m motmetrics.apps.eval_motchallenge /MOT/train ./results 
-	python3 evaluate.py ./results
+	python3 eval/map.py ./results
+	#python3 -u -m motmetrics.apps.eval_motchallenge /MOT/train ./results 
+	#python3 eval/evaluate.py ./results
+	
 
 
