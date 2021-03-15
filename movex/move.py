@@ -4,7 +4,6 @@ from numpy.lib import recfunctions as rfn
 from accumulator import collect_run_time
 
 from fig import Config as C
-from movexo3 import mvs_to_list
 
 
 @collect_run_time

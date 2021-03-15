@@ -11,6 +11,7 @@ RUN apt-get update && apt-get -y install \
       libxrender1 \
       libfontconfig1 \
       libgl1-mesa-glx \
+      ffmpeg \
     && apt-get -y autoremove \
     && apt-get clean autoclean
 

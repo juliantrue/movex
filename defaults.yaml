@@ -1,9 +1,9 @@
 app:
-  mot16_eval:
+  mot_eval:
     path_to_mot_dir: "data"
     results_dir: "results"
 
-  #mot16_trace:
+  #mot_trace:
   #  path_to_mot_trace_dir: "data/MOT16-02" 
   #  results_dir: "results"
   #  log_run_times: True
@@ -14,7 +14,7 @@ move_config:
     alpha: 0.3
   dnn:
     simulator:
-      latency_in_ms: 200
+      latency_in_ms: 100
 
   # TODO: implement ability to run on live DNN
   # live:

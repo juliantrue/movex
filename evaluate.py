@@ -12,23 +12,30 @@ from accumulator import Accumulator
 from movex import MOTClient, extract_mvs, apply_mvs, apply_queue_of_mvs
 
 
-def run_mot16_eval(path_to_mot_dir, path_to_results_dir):
+def run_mot_eval(path_to_mot_dir, path_to_results_dir):
+    # subset = [
+    #    "MOT16-02",
+    #    "MOT16-09",
+    #    "MOT16-11",
+    #    "MOT16-04",
+    #    "MOT16-05",
+    #    "MOT16-10",
+    #    "MOT16-13",
+    # ]
     subset = [
-        "MOT16-02",
-        "MOT16-09",
-        "MOT16-11",
-        "MOT16-04",
-        "MOT16-05",
-        "MOT16-10",
-        "MOT16-13",
+        "MOT20-01",
+        "MOT20-02",
+        "MOT20-03",
+        "MOT20-05",
     ]
+
     for mot_trace_dir in os.listdir(path_to_mot_dir):
         if mot_trace_dir in subset:
             path_to_trace_dir = os.path.join(path_to_mot_dir, mot_trace_dir)
-            run_data = run_mot16_trace(path_to_trace_dir, path_to_results_dir)
+            run_data = run_mot_trace(path_to_trace_dir, path_to_results_dir)
 
 
-def run_mot16_trace(path_to_trace_dir, path_to_results_dir):
+def run_mot_trace(path_to_trace_dir, path_to_results_dir):
     """Runs tracking with MoVe Extrapolation on the MOT16 trace at `path_to_trace_dir`
     and outputs the results to the `path_to_results_dir`"""
     trace_name = os.path.split(path_to_trace_dir)[1]
@@ -47,10 +54,14 @@ def run_mot16_trace(path_to_trace_dir, path_to_results_dir):
     run_data = run_tracking(video_source, detection_source)
     run_data["trace_name"] = trace_name
 
+    if run_data["statistics"] is not None:
+        path_to_run_data_file = os.path.join(
+            path_to_results_dir, trace_name + ".metadata"
+        )
+        write_run_data_to_dir(run_data, path_to_run_data_file)
+
     path_to_results_file = os.path.join(path_to_results_dir, trace_name + ".txt")
-    path_to_run_data_file = os.path.join(path_to_results_dir, trace_name + ".metadata")
     write_results_to_results_dir(run_data["results"], path_to_results_file)
-    write_run_data_to_dir(run_data, path_to_run_data_file)
     return run_data
 
 
@@ -136,8 +147,13 @@ def run_tracking(video_source, detection_source):
                 ]
             )
 
-    run_data["statistics"]["debugging"].show()
-    run_data["statistics"] = post_process_statistics(run_data["statistics"])
+    try:
+        run_data["statistics"]["debugging"].show()
+        run_data["statistics"] = post_process_statistics(run_data["statistics"])
+    except Exception as e:
+        print(e)
+        run_data["statistics"] = None
+
     return run_data
 
 
