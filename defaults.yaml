@@ -2,11 +2,15 @@ app:
   mot_eval:
     path_to_mot_dir: "data"
     results_dir: "results"
-
-  #mot_trace:
-  #  path_to_mot_trace_dir: "data/MOT16-02" 
-  #  results_dir: "results"
-  #  log_run_times: True
+    subset:
+      - "MOT20-01"
+      - "MOT20-02"
+      - "MOT20-03"
+      - "MOT20-04"
+      - "MOT20-05"
+      - "MOT20-06"
+      - "MOT20-07"
+      - "MOT20-08"
 
 move_config:
   bypass: False
@@ -21,6 +25,7 @@ move_config:
   #  triton_endpoint: 
 
   deep_sort:
+    skip: True
     nn_budget: 128
     max_cosine_distance: 0.3
     nms_max_overlap: 1.0

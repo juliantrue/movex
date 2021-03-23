@@ -7,28 +7,13 @@ import pickle
 from fig import Config as C
 from tqdm import tqdm
 
-from deepsort import DeepSortTracker
+
 from accumulator import Accumulator
 from movex import MOTClient, extract_mvs, apply_mvs, apply_queue_of_mvs
 
 
 def run_mot_eval(path_to_mot_dir, path_to_results_dir):
-    # subset = [
-    #    "MOT16-02",
-    #    "MOT16-09",
-    #    "MOT16-11",
-    #    "MOT16-04",
-    #    "MOT16-05",
-    #    "MOT16-10",
-    #    "MOT16-13",
-    # ]
-    subset = [
-        "MOT20-01",
-        "MOT20-02",
-        "MOT20-03",
-        "MOT20-05",
-    ]
-
+    subset = C.app_mot_eval_subset
     for mot_trace_dir in os.listdir(path_to_mot_dir):
         if mot_trace_dir in subset:
             path_to_trace_dir = os.path.join(path_to_mot_dir, mot_trace_dir)
@@ -76,14 +61,17 @@ def run_tracking(video_source, detection_source):
     a detection source that implements `poll` behaviour."""
 
     mv_filter_method = "alpha_trim"
-    tracker = DeepSortTracker(
-        C.move_config_deep_sort_nn_budget,
-        C.move_config_deep_sort_max_cosine_distance,
-        C.move_config_deep_sort_nms_max_overlap,
-        C.move_config_deep_sort_min_confidence,
-        C.move_config_deep_sort_max_iou_distance,
-        C.move_config_deep_sort_n_init,
-    )
+    if not C.move_config_deep_sort_skip:
+        from deepsort import DeepSortTracker
+
+        tracker = DeepSortTracker(
+            C.move_config_deep_sort_nn_budget,
+            C.move_config_deep_sort_max_cosine_distance,
+            C.move_config_deep_sort_nms_max_overlap,
+            C.move_config_deep_sort_min_confidence,
+            C.move_config_deep_sort_max_iou_distance,
+            C.move_config_deep_sort_n_init,
+        )
     acc = Accumulator()
     acc.register(extract_mvs)
     acc.register(apply_queue_of_mvs)
@@ -127,10 +115,15 @@ def run_tracking(video_source, detection_source):
                 bboxes = apply_queue_of_mvs(mvs_buffer, bboxes, mv_filter_method)
                 curr_bboxes = bboxes.copy()
 
-        curr_scores = [1] * len(curr_bboxes)
-        tracked_bboxes, track_ids = tracker.track(
-            img, curr_bboxes, curr_scores, tlbr=False
-        )
+        if not C.move_config_deep_sort_skip:
+            curr_scores = [1] * len(curr_bboxes)
+            tracked_bboxes, track_ids = tracker.track(
+                img, curr_bboxes, curr_scores, tlbr=False
+            )
+
+        else:
+            tracked_bboxes = bboxes
+            track_ids = [-1] * len(bboxes)
 
         loop_now = time.perf_counter()
         run_data["statistics"]["avg_loop_time"].append(loop_now - loop_last)
@@ -150,6 +143,7 @@ def run_tracking(video_source, detection_source):
     try:
         run_data["statistics"]["debugging"].show()
         run_data["statistics"] = post_process_statistics(run_data["statistics"])
+
     except Exception as e:
         print(e)
         run_data["statistics"] = None
@@ -197,32 +191,3 @@ def write_run_data_to_dir(run_data, path_to_results_file):
 
     with open(path_to_results_file, "wb") as f:
         pickle.dump(run_data, f)
-
-
-def display_eval_metadata():
-    folder = sys.argv[1]
-    print(f"Displaying run statistic for: {folder}")
-    avg_loop_time = compute_eval_metadata(folder)
-    print(f"Average Loop Time: {avg_loop_time*1000}ms")
-
-
-def compute_eval_metadata(path_to_results_dir):
-    avg_avg_loop_time = []
-    for result_file in os.listdir(path_to_results_dir):
-        if result_file.split(".")[-1] == "metadata":
-            path_to_metadata_file = os.path.join(path_to_results_dir, result_file)
-            run_data = parse_metadata_file(path_to_metadata_file)
-            avg_avg_loop_time.append(run_data["statistics"]["avg_loop_time"])
-
-    return sum(avg_avg_loop_time) / len(avg_avg_loop_time)
-
-
-def parse_metadata_file(path_to_metadata_file):
-    with open(path_to_metadata_file, "rb") as f:
-        run_data = pickle.load(f)
-
-    return run_data
-
-
-if __name__ == "__main__":
-    display_eval_metadata()
