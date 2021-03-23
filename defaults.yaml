@@ -18,7 +18,7 @@ move_config:
     alpha: 0.3
   dnn:
     simulator:
-      latency_in_ms: 100
+      latency_in_ms: 0
 
   # TODO: implement ability to run on live DNN
   # live:
