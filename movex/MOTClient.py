@@ -30,7 +30,7 @@ class MOTClient(object):
 
         return detections
 
-    def await(self, frame_idx):
+    def wait(self, frame_idx):
         last = time.perf_counter()
         detections = self._create_detections(frame_idx)
         now = time.perf_counter()

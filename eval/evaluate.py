@@ -94,7 +94,7 @@ def run_tracking(video_source, detection_source):
         loop_last = time.perf_counter()
 
         if C.move_config_bypass:
-            detections = detection_source.await(i)
+            detections = detection_source.wait(i)
             curr_bboxes = detections[0]
 
         else:

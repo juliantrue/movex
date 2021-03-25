@@ -1,7 +1,7 @@
 app:
   mot_eval:
     path_to_mot_dir: "data"
-    results_dir: "results/latency_1000"
+    results_dir: "results/latency_500"
     subset:
       - "MOT20-01"
       - "MOT20-02"
@@ -18,7 +18,7 @@ move_config:
     alpha: 0.3
   dnn:
     simulator:
-      latency_in_ms: 1000
+      latency_in_ms: 500
 
   # TODO: implement ability to run on live DNN
   # live:
