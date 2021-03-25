@@ -79,7 +79,7 @@ def run_tracking(video_source, detection_source):
     run_data = {
         "results": [],
         "statistics": {
-            "avg_loop_time": [],
+            "loop_time_samples": [],
             "debugging": acc,
         },
     }
@@ -126,7 +126,7 @@ def run_tracking(video_source, detection_source):
             track_ids = [-1] * len(bboxes)
 
         loop_now = time.perf_counter()
-        run_data["statistics"]["avg_loop_time"].append(loop_now - loop_last)
+        run_data["statistics"]["loop_time_samples"].append(loop_now - loop_last)
 
         for j in range(len(tracked_bboxes)):
             run_data["results"].append(
@@ -141,11 +141,10 @@ def run_tracking(video_source, detection_source):
             )
 
     try:
-        run_data["statistics"]["debugging"].show()
         run_data["statistics"] = post_process_statistics(run_data["statistics"])
 
     except Exception as e:
-        print(e)
+        print("ERROR: ", e)
         run_data["statistics"] = None
 
     return run_data
@@ -158,13 +157,10 @@ def unpack_frame_to_img(frame):
 
 
 def post_process_statistics(statistics):
-    avg_loop_time = sum(statistics["avg_loop_time"]) / len(statistics["avg_loop_time"])
+    avg_loop_time = sum(statistics["loop_time_samples"]) / len(
+        statistics["loop_time_samples"]
+    )
     statistics["avg_loop_time"] = avg_loop_time
-    try:
-        statistics["debugging"] = statistics["debugging"].as_json()
-    except Exception as e:
-        print(e)
-        print("Skipping debugging metric computation.")
 
     return statistics
 

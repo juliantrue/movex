@@ -25,7 +25,7 @@ RUN pip3 install \
       motmetrics \
       opencv-python==4.4.0.44 \
       tqdm \
-      mean_average_precision
+      matplotlib
 
 
 COPY third_party/fig-0.1.0-py3-none-any.whl /tmp/fig-0.1.0-py3-none-any.whl

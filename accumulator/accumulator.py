@@ -13,7 +13,7 @@ class Accumulator(object):
 
     def compute_metrics(self):
         for func_name in self._registered:
-            samples = self._registered[func_name].samples
+            samples = self._registered["samples"] = self._registered[func_name].samples
             if len(samples) == 0:
                 raise Exception("No samples have been collected.")
 

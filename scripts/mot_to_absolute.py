@@ -3,14 +3,21 @@ import numpy as np
 
 
 def main(*args):
-    source_file = args[0]
-    target_folder = args[1]
-    if len(args) > 2:
+    if len(args) > 3:
         print("Too many args")
         print(
-            "USAGE: python3 mot_to_absolute path_to_source_file path_to_target_dir --include_confidence"
+            "USAGE: python3 mot_to_absolute.py [path_to_source_file] [path_to_target_dir] OPTIONAL [--include_confidence]"
         )
         sys.exit(0)
+
+    elif len(args) < 2:
+        print("Too few args")
+        print(
+            "USAGE: python3 mot_to_absolute.py [path_to_source_file] [path_to_target_dir] OPTIONAL [--include_confidence]"
+        )
+        sys.exit(0)
+    source_file = args[0]
+    target_folder = args[1]
 
     # Convert file path to abs detections
     data = convert(source_file)
