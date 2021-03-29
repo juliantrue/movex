@@ -12,7 +12,7 @@ def main():
 
 
 def plot_AP_vs_od_latency(df):
-    plt.figure()
+    plt.figure(figsize=(8, 7))
     plt.plot(df["object_detection_latency_(ms)"], df["AP"], "bo-")
     plt.title("AP vs Simulated Object Detector Latency")
     plt.xlabel("Simulated Object Detector Latency (ms)")
