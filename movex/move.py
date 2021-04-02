@@ -10,7 +10,7 @@ from fig import Config as C
 def apply_queue_of_mvs(mvs_buffer, bboxes, method):
     for _ in range(mvs_buffer.qsize()):
         mvs = mvs_buffer.get()
-        bboxes, mvs = apply_mvs(bboxes, mvs, method)
+        bboxes = apply_mvs(bboxes, mvs, method)
 
     return bboxes
 
@@ -24,7 +24,10 @@ def apply_mvs(bboxes, mvs, method):
     out_bboxes = []
     out_mvs = []
     if len(mvs) == 0:
-        return out_bboxes, out_mvs
+        return out_bboxes  # , out_mvs
+
+    elif C.ablation_skip_perturbation:
+        return bboxes  # , mvs
 
     for bbox in bboxes:
         # Get all MVs contained in the bbox
@@ -51,7 +54,7 @@ def apply_mvs(bboxes, mvs, method):
         ]
         out_bboxes.append(bbox_to_append)
         out_mvs.append(motion_xy_by_scale)
-    return out_bboxes, out_mvs
+    return out_bboxes  # , out_mvs
 
 
 def crop_mvs_to_bbox(mvs, bbox):

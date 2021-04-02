@@ -107,7 +107,7 @@ def run_tracking(video_source, detection_source):
                 continue
 
             elif not first_frame and detections is None:
-                curr_bboxes, mvs = apply_mvs(curr_bboxes, curr_mvs, mv_filter_method)
+                curr_bboxes = apply_mvs(curr_bboxes, curr_mvs, mv_filter_method)
 
             else:
                 first_frame = False
