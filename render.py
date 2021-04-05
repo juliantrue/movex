@@ -5,14 +5,16 @@ import numpy as np
 
 
 def main():
-    path_to_result_metadata_file = "results/test_run_ignore_mvs/MOT16-04.metadata"
-    path_to_mot_dir = "data"
+    mot_trace_name = "MOT20-02"
+    path_to_results_dir = "results/ablation/no_perturbation_300ms"
+    path_to_data_dir = "data"
 
+    path_to_result_metadata_file = os.path.join(
+        path_to_results_dir, f"{mot_trace_name}.metadata"
+    )
     metadata = parse_result_metadata_file(path_to_result_metadata_file)
-    # mot_trace_name = metadata["trace_name"]
-    mot_trace_name = "MOT16-04"
     path_to_video_file = os.path.join(
-        path_to_mot_dir, mot_trace_name, mot_trace_name + ".mp4"
+        path_to_data_dir, mot_trace_name, mot_trace_name + ".mp4"
     )
 
     video = video_generator(path_to_video_file)
@@ -24,12 +26,6 @@ def parse_result_metadata_file(path_to_result_metadata_file):
         metadata = pickle.load(f)
 
     return metadata
-
-
-def video_generator(path_to_video_file):
-    cap = cv2.VideoCapture(path_to_video_file)
-    while True:
-        yield cap.read()
 
 
 def render_video_with_metadata(video, metadata):
@@ -44,7 +40,13 @@ def render_video_with_metadata(video, metadata):
 
         frame = render_bboxes_on_frame(frame, bboxes)
         cv2.imshow(f"{metadata['trace_name']}", frame)
-        cv2.waitKey(30)
+        cv2.waitKey(25)
+
+
+def video_generator(path_to_video_file):
+    cap = cv2.VideoCapture(path_to_video_file)
+    while True:
+        yield cap.read()
 
 
 def bbox_generator(results):
@@ -55,9 +57,16 @@ def bbox_generator(results):
 
     frame_idxs_with_duplicates = results[:, 0]
     frames_idxs = np.unique(frame_idxs_with_duplicates)
-    for i in frames_idxs:
+    first_idx = frames_idxs[0]
+    prelude = list(range(1, int(first_idx)))
+
+    for i in np.concatenate([prelude, frames_idxs]):
         bbox_idxs = np.where(frame_idxs_with_duplicates == i)
-        yield np.squeeze(bboxes_tlbr[bbox_idxs, :])
+        if i < first_idx:
+            yield []
+
+        else:
+            yield np.squeeze(bboxes_tlbr[bbox_idxs, :])
 
 
 def render_bboxes_on_frame(img, annotations):

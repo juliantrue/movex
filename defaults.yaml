@@ -1,7 +1,7 @@
 app:
   mot_eval:
     path_to_mot_dir: "data"
-    results_dir: "results/ablation"
+    results_dir: "results/ablation/no_perturbation_300ms"
     subset:
       - "MOT20-01"
       - "MOT20-02"
@@ -18,12 +18,12 @@ move_config:
     alpha: 0.3
 
   ablation:
-    skip_perturbation: False
+    skip_perturbation: True
 
 
   dnn:
     simulator:
-      latency_in_ms: 500
+      latency_in_ms: 300
 
   # TODO: implement ability to run on live DNN
   # live:

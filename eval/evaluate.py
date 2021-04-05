@@ -61,17 +61,6 @@ def run_tracking(video_source, detection_source):
     a detection source that implements `poll` behaviour."""
 
     mv_filter_method = "alpha_trim"
-    if not C.move_config_deep_sort_skip:
-        from deepsort import DeepSortTracker
-
-        tracker = DeepSortTracker(
-            C.move_config_deep_sort_nn_budget,
-            C.move_config_deep_sort_max_cosine_distance,
-            C.move_config_deep_sort_nms_max_overlap,
-            C.move_config_deep_sort_min_confidence,
-            C.move_config_deep_sort_max_iou_distance,
-            C.move_config_deep_sort_n_init,
-        )
     acc = Accumulator()
     acc.register(extract_mvs)
     acc.register(apply_queue_of_mvs)
@@ -115,28 +104,20 @@ def run_tracking(video_source, detection_source):
                 bboxes = apply_queue_of_mvs(mvs_buffer, bboxes, mv_filter_method)
                 curr_bboxes = bboxes.copy()
 
-        if not C.move_config_deep_sort_skip:
-            curr_scores = [1] * len(curr_bboxes)
-            tracked_bboxes, track_ids = tracker.track(
-                img, curr_bboxes, curr_scores, tlbr=False
-            )
-
-        else:
-            tracked_bboxes = bboxes
-            track_ids = [-1] * len(bboxes)
+        track_ids = [-1] * len(bboxes)
 
         loop_now = time.perf_counter()
         run_data["statistics"]["loop_time_samples"].append(loop_now - loop_last)
 
-        for j in range(len(tracked_bboxes)):
+        for j in range(len(bboxes)):
             run_data["results"].append(
                 [
                     i,
                     track_ids[j],
-                    tracked_bboxes[j][0],
-                    tracked_bboxes[j][1],
-                    tracked_bboxes[j][2],
-                    tracked_bboxes[j][3],
+                    bboxes[j][0],
+                    bboxes[j][1],
+                    bboxes[j][2],
+                    bboxes[j][3],
                 ]
             )
 

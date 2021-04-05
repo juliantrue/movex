@@ -24,10 +24,11 @@ def apply_mvs(bboxes, mvs, method):
     out_bboxes = []
     out_mvs = []
     if len(mvs) == 0:
-        return out_bboxes  # , out_mvs
+        return out_bboxes
 
-    elif C.ablation_skip_perturbation:
-        return bboxes  # , mvs
+    elif C.move_config_ablation_skip_perturbation:
+        print("skipping")
+        return bboxes
 
     for bbox in bboxes:
         # Get all MVs contained in the bbox
@@ -54,7 +55,7 @@ def apply_mvs(bboxes, mvs, method):
         ]
         out_bboxes.append(bbox_to_append)
         out_mvs.append(motion_xy_by_scale)
-    return out_bboxes  # , out_mvs
+    return out_bboxes
 
 
 def crop_mvs_to_bbox(mvs, bbox):
