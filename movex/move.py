@@ -27,7 +27,6 @@ def apply_mvs(bboxes, mvs, method):
         return out_bboxes
 
     elif C.move_config_ablation_skip_perturbation:
-        print("skipping")
         return bboxes
 
     for bbox in bboxes:
