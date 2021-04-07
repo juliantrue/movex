@@ -70,10 +70,13 @@ def images_to_video(path_to_image_folder, video_out_path, metadata):
             f"-vf scale=-2:{height}",
             "-vcodec libx264",
             "-preset slow",
+            "-x264-params",
+            "bframes=0",
             "-pix_fmt yuv420p",
             f"{video_out_path}",
         ]
     )
+    # "-pix_fmt yuv420p",
     print(f"Running {command}")
     subprocess.run(command.split(" "))
 

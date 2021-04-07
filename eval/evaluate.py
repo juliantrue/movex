@@ -60,7 +60,7 @@ def run_tracking(video_source, detection_source):
     """Runs tracking with MoVe Extrapolation based on a av.container video source and
     a detection source that implements `poll` behaviour."""
 
-    mv_filter_method = "alpha_trim"
+    mv_filter_method = "median"
     acc = Accumulator()
     acc.register(extract_mvs)
     acc.register(apply_queue_of_mvs)

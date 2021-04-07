@@ -1,7 +1,7 @@
 app:
   mot_eval:
     path_to_mot_dir: "data"
-    results_dir: "results/ablation/no_perturbation_double_fps/latency"
+    results_dir: "results/baseline/preset_slow_median"
     subset:
       - "MOT20-01"
       - "MOT20-02"
@@ -14,11 +14,11 @@ app:
 
 move_config:
   bypass: False
-  alpha_trim:
-    alpha: 0.3
+  #alpha_trim:
+  #  alpha: 0.1
 
   ablation:
-    skip_perturbation: True
+    skip_perturbation: False
 
 
   dnn:
