@@ -105,6 +105,23 @@ def filter_bbox_mvs(mvs_in_bbox, method):
 
 @collect_run_time
 def extract_mvs(frame):
+
+    method = "h264"  # This is hardcoded for now
+    mvs = np.array([])
+    if method == "h264":
+        mvs = h264_mvs(frame)
+
+    elif method == "rlof":
+        pass
+
+    return mvs
+
+
+def rlof(frame):
+    pass
+
+
+def h264_mvs(frame):
     curr_mvs = list(frame.side_data)
     if len(curr_mvs) > 0:
         curr_mvs = curr_mvs[0]

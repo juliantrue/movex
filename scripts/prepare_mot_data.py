@@ -55,7 +55,7 @@ def extract_metadata(path_to_metadata_file):
 
 
 def images_to_video(path_to_image_folder, video_out_path, metadata):
-    fps = int(metadata["frameRate"]) * 2
+    fps = int(metadata["frameRate"])
     name = metadata["name"]
     width = metadata["imWidth"]
     height = metadata["imHeight"]
@@ -69,6 +69,7 @@ def images_to_video(path_to_image_folder, video_out_path, metadata):
             f"-i {images_path}",
             f"-vf scale=-2:{height}",
             "-vcodec libx264",
+            "-preset slow",
             "-pix_fmt yuv420p",
             f"{video_out_path}",
         ]
