@@ -3,7 +3,7 @@ import pandas as pd
 
 
 def main():
-    path_to_results = "results/results.csv"
+    path_to_results = "results/ablation/no_perturbation_results.csv"
 
     df = pd.read_csv(path_to_results)
 

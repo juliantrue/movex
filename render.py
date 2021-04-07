@@ -5,8 +5,9 @@ import numpy as np
 
 
 def main():
-    mot_trace_name = "MOT20-02"
+    mot_trace_name = "MOT20-03"
     path_to_results_dir = "results/ablation/no_perturbation_300ms"
+    # path_to_results_dir = "results/latency_300ms/"
     path_to_data_dir = "data"
 
     path_to_result_metadata_file = os.path.join(

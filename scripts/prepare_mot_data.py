@@ -55,7 +55,7 @@ def extract_metadata(path_to_metadata_file):
 
 
 def images_to_video(path_to_image_folder, video_out_path, metadata):
-    fps = int(metadata["frameRate"])
+    fps = int(metadata["frameRate"]) * 2
     name = metadata["name"]
     width = metadata["imWidth"]
     height = metadata["imHeight"]

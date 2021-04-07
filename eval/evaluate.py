@@ -104,11 +104,10 @@ def run_tracking(video_source, detection_source):
                 bboxes = apply_queue_of_mvs(mvs_buffer, bboxes, mv_filter_method)
                 curr_bboxes = bboxes.copy()
 
-        track_ids = [-1] * len(bboxes)
-
         loop_now = time.perf_counter()
         run_data["statistics"]["loop_time_samples"].append(loop_now - loop_last)
 
+        track_ids = [-1] * len(bboxes)
         for j in range(len(bboxes)):
             run_data["results"].append(
                 [

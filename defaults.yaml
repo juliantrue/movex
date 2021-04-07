@@ -1,7 +1,7 @@
 app:
   mot_eval:
     path_to_mot_dir: "data"
-    results_dir: "results/ablation/no_perturbation_300ms"
+    results_dir: "results/ablation/no_perturbation_double_fps/latency"
     subset:
       - "MOT20-01"
       - "MOT20-02"
@@ -23,18 +23,22 @@ move_config:
 
   dnn:
     simulator:
-      latency_in_ms: 300
+      latency_in_ms:
+        - 0
+        - 25
+        - 50
+        - 75
+        - 100
+        - 150
+        - 200
+        - 300
+        - 400
+        - 500
+        - 600
+        - 1000
 
   # TODO: implement ability to run on live DNN
   # live:
   #  triton_endpoint: 
 
-  deep_sort:
-    skip: True
-    nn_budget: 128
-    max_cosine_distance: 0.3
-    nms_max_overlap: 1.0
-    min_confidence: 0.5
-    max_iou_distance: 0.7
-    n_init: 2
 
