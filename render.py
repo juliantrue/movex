@@ -6,8 +6,7 @@ import numpy as np
 
 def main():
     mot_trace_name = "MOT20-03"
-    path_to_results_dir = "results/ablation/no_perturbation/no_perturbation_400ms"
-    # path_to_results_dir = "results/baseline/preset_slow_median/preset_slow_median200"
+    path_to_results_dir = "results/ablation/no_perturbation/no_perturbation_300ms"
     path_to_data_dir = "data"
 
     path_to_result_metadata_file = os.path.join(
@@ -57,13 +56,13 @@ def bbox_generator(results):
     bboxes_tlbr[:, 3] = bboxes_xyah[:, 1] + bboxes_xyah[:, 3]
 
     frame_idxs_with_duplicates = results[:, 0]
-    frames_idxs = np.unique(frame_idxs_with_duplicates)
+    frames_idxs = np.sort(np.unique(frame_idxs_with_duplicates))
     first_idx = frames_idxs[0]
-    prelude = list(range(1, int(first_idx)))
+    prelude = int(first_idx)
 
-    for i in np.concatenate([prelude, frames_idxs]):
+    for i in range(int(frames_idxs[-1])):
         bbox_idxs = np.where(frame_idxs_with_duplicates == i)
-        if i < first_idx:
+        if len(bbox_idxs[0]) == 0:
             yield []
 
         else:
