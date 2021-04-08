@@ -57,4 +57,7 @@ class MOTClient(object):
                 bboxes.append(bbox)
                 scores.append(confidence)
 
+        if not len(bboxes) == 0:
+            bboxes = np.stack(bboxes)
+
         return (bboxes, scores)

@@ -1,7 +1,7 @@
 app:
   mot_eval:
     path_to_mot_dir: "data"
-    results_dir: "results/baseline/preset_slow_median"
+    results_dir: "results/ablation/no_perturbation"
     subset:
       - "MOT20-01"
       - "MOT20-02"
