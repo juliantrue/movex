@@ -1,9 +1,11 @@
 import time
+import cv2
 import numpy as np
 from numpy.lib import recfunctions as rfn
 from accumulator import collect_run_time
 
 from fig import Config as C
+from .decorators import rolling_frame
 
 
 @collect_run_time
@@ -105,39 +107,85 @@ def filter_bbox_mvs(mvs_in_bbox, method):
 
 @collect_run_time
 def extract_mvs(frame):
-
-    method = "h264"  # This is hardcoded for now
+    method = "rlof"
     mvs = np.array([])
     if method == "h264":
         mvs = h264_mvs(frame)
 
     elif method == "rlof":
-        pass
+        mvs = rlof(frame)
 
     return mvs
 
 
-def rlof(frame):
-    pass
+@rolling_frame
+def rlof(curr_frame, last_frame):
+    mvs = np.array([])
+    if last_frame is not None:
+        last = time.time()
+
+        gpu_frame = cv2.cuda_GpuMat()
+        gpu_frame.upload(curr_frame)
+        last_gpu_frame = cv2.cuda_GpuMat()
+        last_gpu_frame.upload(last_frame)
+        # flow = cv2.optflow.calcOpticalFlowDenseRLOF(last_frame, curr_frame, None)
+
+        gpu_flow = cv2.cuda_FarnebackOpticalFlow.create(
+            5,
+            0.5,
+            False,
+            15,
+            3,
+            5,
+            1.2,
+            0,
+        )
+
+        flow = cv2.cuda_FarnebackOpticalFlow.calc(
+            gpu_flow, last_gpu_frame, gpu_frame, None
+        )
+
+        now = time.time()
+        print(f"{(now-last)*1000}ms")
+        flow_x = flow[:, :, 0].reshape(-1)
+        flow_y = flow[:, :, 1].reshape(-1)
+
+        w, h, _ = flow.shape
+        src_x = np.arange(0, w)
+        src_y = np.arange(0, h)
+
+        arr = np.array(np.meshgrid(src_x, src_y)).T.reshape(-1, 2)
+        src_x, src_y = arr[:, 0], arr[:, 1]
+        dst_x, dst_y = src_x - flow_y, src_y - flow_y
+
+        src_x, src_y = np.expand_dims(src_x, axis=1), np.expand_dims(src_y, axis=1)
+        dst_x, dst_y = np.expand_dims(dst_x, axis=1), np.expand_dims(dst_y, axis=1)
+        flow_x, flow_y = np.expand_dims(flow_x, axis=1), np.expand_dims(flow_y, axis=1)
+
+        mvs = np.concatenate(
+            [src_x, src_y, dst_x, dst_y, flow_x, flow_y, np.ones(flow_x.shape)], axis=1
+        )
+
+    return mvs
 
 
 def h264_mvs(frame):
-    curr_mvs = list(frame.side_data)
-    if len(curr_mvs) > 0:
-        curr_mvs = curr_mvs[0]
+    mvs = list(frame.side_data)
+    if len(mvs) > 0:
+        mvs = mvs[0]
 
         # https://github.com/FFmpeg/FFmpeg/blob/a0ac49e38ee1d1011c394d7be67d0f08b2281526/libavutil/motion_vector.h
         # Motion Vector:
         # src_x = dst_x + motion_x / motion_scale
         # src_y = dst_y + motion_x / motion_scale
-        curr_mvs = curr_mvs.to_ndarray()
-        curr_mvs = rfn.structured_to_unstructured(curr_mvs)
+        mvs = mvs.to_ndarray()
+        mvs = rfn.structured_to_unstructured(mvs)
 
         # returns a Nx7 array where there are N motion vectors defined by:
         # [src_x, src_y, dst_x, dst_y, motion_x, motion_y, motion_scale]
-        curr_mvs = curr_mvs[:, [3, 4, 5, 6, 8, 9, 10]]
+        mvs = mvs[:, [3, 4, 5, 6, 8, 9, 10]]
 
     else:
-        curr_mvs = np.array([])
+        mvs = np.array([])
 
-    return curr_mvs
+    return mvs

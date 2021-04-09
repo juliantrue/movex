@@ -107,16 +107,16 @@ def run_tracking(video_source, detection_source):
         loop_now = time.perf_counter()
         run_data["statistics"]["loop_time_samples"].append(loop_now - loop_last)
 
-        track_ids = [-1] * len(bboxes)
-        for j in range(len(bboxes)):
+        track_ids = [-1] * len(curr_bboxes)
+        for j in range(len(curr_bboxes)):
             run_data["results"].append(
                 [
                     i,
                     track_ids[j],
-                    bboxes[j][0],
-                    bboxes[j][1],
-                    bboxes[j][2],
-                    bboxes[j][3],
+                    curr_bboxes[j][0],
+                    curr_bboxes[j][1],
+                    curr_bboxes[j][2],
+                    curr_bboxes[j][3],
                 ]
             )
 
