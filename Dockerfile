@@ -15,7 +15,6 @@ RUN apt-get update && apt-get -y install \
     && apt-get -y autoremove \
     && apt-get clean autoclean
 
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y
 
 RUN pip3 install --upgrade pip
 RUN pip3 install \
