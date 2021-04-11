@@ -23,6 +23,7 @@ RUN pip3 install \
       scipy \
       motmetrics \
       opencv-python==4.4.0.44 \
+      opencv-contrib-python==4.4.0.44 \
       tqdm \
       matplotlib
 

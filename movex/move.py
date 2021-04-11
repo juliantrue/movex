@@ -122,31 +122,9 @@ def extract_mvs(frame):
 def rlof(curr_frame, last_frame):
     mvs = np.array([])
     if last_frame is not None:
-        last = time.time()
-
-        gpu_frame = cv2.cuda_GpuMat()
-        gpu_frame.upload(curr_frame)
-        last_gpu_frame = cv2.cuda_GpuMat()
-        last_gpu_frame.upload(last_frame)
-        # flow = cv2.optflow.calcOpticalFlowDenseRLOF(last_frame, curr_frame, None)
-
-        gpu_flow = cv2.cuda_FarnebackOpticalFlow.create(
-            5,
-            0.5,
-            False,
-            15,
-            3,
-            5,
-            1.2,
-            0,
+        flow = cv2.optflow.calcOpticalFlowDenseRLOF(
+            last_frame, curr_frame, None, gridStep=(16, 16)
         )
-
-        flow = cv2.cuda_FarnebackOpticalFlow.calc(
-            gpu_flow, last_gpu_frame, gpu_frame, None
-        )
-
-        now = time.time()
-        print(f"{(now-last)*1000}ms")
         flow_x = flow[:, :, 0].reshape(-1)
         flow_y = flow[:, :, 1].reshape(-1)
 
