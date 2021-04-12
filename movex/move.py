@@ -107,13 +107,38 @@ def filter_bbox_mvs(mvs_in_bbox, method):
 
 @collect_run_time
 def extract_mvs(frame):
-    method = "rlof"
+    method = "flownet"
     mvs = np.array([])
     if method == "h264":
         mvs = h264_mvs(frame)
 
     elif method == "rlof":
         mvs = rlof(frame)
+
+    elif method == "flownet":
+        mvs = flownet(frame, C.current_trace)
+
+    return mvs
+
+
+def h264_mvs(frame):
+    mvs = list(frame.side_data)
+    if len(mvs) > 0:
+        mvs = mvs[0]
+
+        # https://github.com/FFmpeg/FFmpeg/blob/a0ac49e38ee1d1011c394d7be67d0f08b2281526/libavutil/motion_vector.h
+        # Motion Vector:
+        # src_x = dst_x + motion_x / motion_scale
+        # src_y = dst_y + motion_x / motion_scale
+        mvs = mvs.to_ndarray()
+        mvs = rfn.structured_to_unstructured(mvs)
+
+        # returns a Nx7 array where there are N motion vectors defined by:
+        # [src_x, src_y, dst_x, dst_y, motion_x, motion_y, motion_scale]
+        mvs = mvs[:, [3, 4, 5, 6, 8, 9, 10]]
+
+    else:
+        mvs = np.array([])
 
     return mvs
 
@@ -147,23 +172,52 @@ def rlof(curr_frame, last_frame):
     return mvs
 
 
-def h264_mvs(frame):
-    mvs = list(frame.side_data)
-    if len(mvs) > 0:
-        mvs = mvs[0]
+def flownet(curr_frame, mot_trace):
 
-        # https://github.com/FFmpeg/FFmpeg/blob/a0ac49e38ee1d1011c394d7be67d0f08b2281526/libavutil/motion_vector.h
-        # Motion Vector:
-        # src_x = dst_x + motion_x / motion_scale
-        # src_y = dst_y + motion_x / motion_scale
-        mvs = mvs.to_ndarray()
-        mvs = rfn.structured_to_unstructured(mvs)
-
-        # returns a Nx7 array where there are N motion vectors defined by:
-        # [src_x, src_y, dst_x, dst_y, motion_x, motion_y, motion_scale]
-        mvs = mvs[:, [3, 4, 5, 6, 8, 9, 10]]
+    last = time.perf_counter()
+    # I know this isn't pretty, but if we are using flownet, we need this precomputed for simplicity
+    if not hasattr(C, "current_frame"):
+        C.current_frame = 0
+        frame_idx = str(C.current_frame).zfill(7)
 
     else:
-        mvs = np.array([])
+        C.current_frame += 1
+        frame_idx = str(C.current_frame).zfill(7)
+
+    mvs = np.array([])
+    filename = f"/flownet_data/{mot_trace}/outputs/{frame_idx}-flow.flo"
+    f = open(filename, "rb")
+
+    et_str = f.read(13)
+    elapsed_time_in_s = float(et_str)
+
+    width = np.fromfile(f, np.int32, 1).squeeze()
+    height = np.fromfile(f, np.int32, 1).squeeze()
+    flow = np.fromfile(f, np.float32, width * height).reshape((height, width))
+    flow = flow.astype(np.float32)
+
+    flow_x = flow[:, 0].reshape(-1)
+    flow_y = flow[:, 1].reshape(-1)
+
+    last = time.perf_counter()
+    src_x = np.arange(0, height)
+    src_y = np.arange(0, height)
+
+    dst_x, dst_y = src_x - flow_y, src_y - flow_y
+
+    last = time.perf_counter()
+    src_x, src_y = np.expand_dims(src_x, axis=1), np.expand_dims(src_y, axis=1)
+    dst_x, dst_y = np.expand_dims(dst_x, axis=1), np.expand_dims(dst_y, axis=1)
+    flow_x, flow_y = np.expand_dims(flow_x, axis=1), np.expand_dims(flow_y, axis=1)
+
+    mvs = np.concatenate(
+        [src_x, src_y, dst_x, dst_y, flow_x, flow_y, np.ones(flow_x.shape)], axis=1
+    )
+
+    now = time.perf_counter()
+    elapsed_time_in_s_actual = now - last
+    delta_t = elapsed_time_in_s - elapsed_time_in_s_actual
+    if not delta_t < 0:
+        time.sleep(elapsed_time_in_s - elapsed_time_in_s_actual)
 
     return mvs

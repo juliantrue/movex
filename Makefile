@@ -17,6 +17,7 @@ run:
 			-e DISPLAY=unix${DISPLAY} \
 			-v /tmp/.X11-unix:/tmp/.X11-unix \
 			-v ${MOT_PATH}:/MOT \
+			-v /home/julian/Datasets/flownet_data:/flownet_data \
 			-v ${CWD}:/move \
 			move:latest bash
 

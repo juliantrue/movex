@@ -24,6 +24,7 @@ def run_mot_trace(path_to_trace_dir, path_to_results_dir):
     """Runs tracking with MoVe Extrapolation on the MOT16 trace at `path_to_trace_dir`
     and outputs the results to the `path_to_results_dir`"""
     trace_name = os.path.split(path_to_trace_dir)[1]
+    C.current_trace = trace_name
     video_source = read_video_source_and_set_read_settings(
         os.path.join(path_to_trace_dir, trace_name + ".mp4")
     )
