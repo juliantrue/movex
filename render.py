@@ -6,7 +6,7 @@ import numpy as np
 
 def main():
     mot_trace_name = "MOT20-03"
-    path_to_results_dir = "results/baseline/sandbox/latency300"
+    path_to_results_dir = "results/flownet/latency300"
     path_to_data_dir = "data"
 
     path_to_result_metadata_file = os.path.join(

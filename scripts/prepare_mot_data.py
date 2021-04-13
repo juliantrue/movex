@@ -31,7 +31,8 @@ def convert_mot_trace(path_to_mot_trace, target_folder_path):
     target_video_path = os.path.join(
         target_folder_path, os.path.split(target_folder_path)[-1] + ".mp4"
     )
-    images_to_video(images_path, target_video_path, metadata)
+    images_to_h264video(images_path, target_video_path, metadata)
+    # images_to_h265video(images_path, target_video_path, metadata)
 
     detections_path = os.path.join(path_to_mot_trace, "det", "det.txt")
     target_detections_path = os.path.join(
@@ -54,7 +55,7 @@ def extract_metadata(path_to_metadata_file):
     return metadata
 
 
-def images_to_video(path_to_image_folder, video_out_path, metadata):
+def images_to_h264video(path_to_image_folder, video_out_path, metadata):
     fps = int(metadata["frameRate"])
     name = metadata["name"]
     width = metadata["imWidth"]
@@ -76,7 +77,32 @@ def images_to_video(path_to_image_folder, video_out_path, metadata):
             f"{video_out_path}",
         ]
     )
-    # "-pix_fmt yuv420p",
+    print(f"Running {command}")
+    subprocess.run(command.split(" "))
+
+
+def images_to_h265video(path_to_image_folder, video_out_path, metadata):
+    fps = int(metadata["frameRate"])
+    name = metadata["name"]
+    width = metadata["imWidth"]
+    height = metadata["imHeight"]
+
+    images_path = os.path.join(path_to_image_folder, "%06d.jpg")
+    command = " ".join(
+        [
+            "ffmpeg",
+            "-y",
+            f"-r {fps}",
+            f"-i {images_path}",
+            f"-vf scale=-2:{height}",
+            "-vcodec libx265",
+            "-preset slow",
+            "-x265-params",
+            "bframes=0",
+            "-pix_fmt yuv420p",
+            f"{video_out_path}",
+        ]
+    )
     print(f"Running {command}")
     subprocess.run(command.split(" "))
 

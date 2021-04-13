@@ -180,13 +180,25 @@ def flownet(curr_frame, mot_trace):
         C.current_frame = 0
         frame_idx = str(C.current_frame).zfill(7)
 
+    elif C.current_frame is None:
+        C.current_frame = 0
+        frame_idx = str(C.current_frame).zfill(7)
+
     else:
         C.current_frame += 1
         frame_idx = str(C.current_frame).zfill(7)
 
     mvs = np.array([])
+
     filename = f"/flownet_data/{mot_trace}/outputs/{frame_idx}-flow.flo"
-    f = open(filename, "rb")
+    try:
+        f = open(filename, "rb")
+
+    except FileNotFoundError as e:
+        print(e)
+        print("Could not open file.")
+        C.current_frame = None
+        return np.array([])
 
     et_str = f.read(13)
     elapsed_time_in_s = float(et_str)
@@ -198,6 +210,11 @@ def flownet(curr_frame, mot_trace):
 
     flow_x = flow[:, 0].reshape(-1)
     flow_y = flow[:, 1].reshape(-1)
+
+    downsample_factor = 8
+    flow_x = flow_x[::downsample_factor]
+    flow_y = flow_y[::downsample_factor]
+    height = flow_x.shape[0]
 
     last = time.perf_counter()
     src_x = np.arange(0, height)
@@ -217,7 +234,8 @@ def flownet(curr_frame, mot_trace):
     now = time.perf_counter()
     elapsed_time_in_s_actual = now - last
     delta_t = elapsed_time_in_s - elapsed_time_in_s_actual
-    if not delta_t < 0:
-        time.sleep(elapsed_time_in_s - elapsed_time_in_s_actual)
+    # if not delta_t < 0:
+    #    time.sleep(elapsed_time_in_s - elapsed_time_in_s_actual)
 
+    f.close()
     return mvs
