@@ -29,8 +29,11 @@ def run_mot_trace(path_to_trace_dir, path_to_results_dir):
         os.path.join(path_to_trace_dir, trace_name + ".mp4")
     )
 
+    network = C.app_mot_eval_detections
     client_config = {
-        "path_to_detections": os.path.join(path_to_trace_dir, trace_name + ".npy"),
+        "path_to_detections": os.path.join(
+            path_to_trace_dir, trace_name + f"-{network}" + ".npy"
+        ),
         "latency": C.move_config_dnn_simulator_latency_in_ms,
         "video_fps": video_source.streams.video[0].average_rate,
     }

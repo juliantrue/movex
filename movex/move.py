@@ -107,10 +107,11 @@ def filter_bbox_mvs(mvs_in_bbox, method):
 
 @collect_run_time
 def extract_mvs(frame):
-    method = "flownet"
+
+    method = C.move_config_motion_vector_method
     mvs = np.array([])
-    if method == "h264":
-        mvs = h264_mvs(frame)
+    if method == "h26x":
+        mvs = h26x_mvs(frame)
 
     elif method == "rlof":
         mvs = rlof(frame)
@@ -121,7 +122,7 @@ def extract_mvs(frame):
     return mvs
 
 
-def h264_mvs(frame):
+def h26x_mvs(frame):
     mvs = list(frame.side_data)
     if len(mvs) > 0:
         mvs = mvs[0]
@@ -211,7 +212,7 @@ def flownet(curr_frame, mot_trace):
     flow_x = flow[:, 0].reshape(-1)
     flow_y = flow[:, 1].reshape(-1)
 
-    downsample_factor = 8
+    downsample_factor = 16
     flow_x = flow_x[::downsample_factor]
     flow_y = flow_y[::downsample_factor]
     height = flow_x.shape[0]

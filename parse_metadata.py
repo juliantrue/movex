@@ -30,11 +30,16 @@ def compute_eval_metadata(path_to_results_dir):
         max_latency = max(run_data["statistics"]["loop_time_samples"])
         peak_latency.append(max_latency)
 
-    return (
-        sum(avg_avg_loop_time) / len(avg_avg_loop_time),
-        cumulative_time,
-        sum(peak_latency) / len(peak_latency),
-    )
+    try:
+        return (
+            sum(avg_avg_loop_time) / len(avg_avg_loop_time),
+            cumulative_time,
+            sum(peak_latency) / len(peak_latency),
+        )
+    except ZeroDivisionError as e:
+        print("ZeroDivisionError: ", e)
+        print(avg_avg_loop_time)
+        print(cumulative_time)
 
 
 def metadata_file_paths_in_folder(path_to_results_dir):

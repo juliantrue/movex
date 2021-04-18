@@ -1,7 +1,8 @@
 app:
   mot_eval:
+    detections: "yolo960"
     path_to_mot_dir: "data"
-    results_dir: "results/flownet/latency"
+    results_dir: "results/yolo960/latency"
     subset:
       - "MOT20-01"
       - "MOT20-02"
@@ -16,6 +17,7 @@ move_config:
   bypass: False
   #alpha_trim:
   #  alpha: 0.1
+  motion_vector_method: "h26x" # [h26x, rlof, flownet]
 
   ablation:
     skip_perturbation: False

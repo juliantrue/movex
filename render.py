@@ -6,7 +6,7 @@ import numpy as np
 
 def main():
     mot_trace_name = "MOT20-03"
-    path_to_results_dir = "results/flownet/latency300"
+    path_to_results_dir = "results/yolo416/latency0"
     path_to_data_dir = "data"
 
     path_to_result_metadata_file = os.path.join(
@@ -34,7 +34,6 @@ def render_video_with_metadata(video, metadata):
     bboxes_per_frame = bbox_generator(results)
 
     for (ret, frame), bboxes in zip(video, bboxes_per_frame):
-
         if not ret:
             break
 
