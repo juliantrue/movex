@@ -4,6 +4,8 @@ accepted at the [Robust Video Scene Understanding: Tracking and Video Segmentati
 
 **WARNING**: __There is active work being done on this repository. We make no promises about its stability or backwards compatibility for the time being.__
 
+![MOVEX in action](https://github.com/juliantrue/movex/blob/master/assets/thediagram.png?raw=true)
+
 # Some Differences From the Paper
 Since the time of submitting the referenced paper, additional work has been done.
 
