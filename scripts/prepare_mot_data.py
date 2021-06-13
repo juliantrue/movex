@@ -32,7 +32,6 @@ def convert_mot_trace(path_to_mot_trace, target_folder_path):
         target_folder_path, os.path.split(target_folder_path)[-1] + ".mp4"
     )
     images_to_h264video(images_path, target_video_path, metadata)
-    # images_to_h265video(images_path, target_video_path, metadata)
 
     detections_path = os.path.join(path_to_mot_trace, "det", "det.txt")
     target_detections_path = os.path.join(

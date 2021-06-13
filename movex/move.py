@@ -31,6 +31,13 @@ def apply_mvs(bboxes, mvs, method):
     elif C.move_config_ablation_skip_perturbation:
         return bboxes
 
+    motion_scale = np.repeat(np.expand_dims(mvs[:, 6], axis=1), 2, axis=1)
+    motion_xy_by_scale = mvs[:, 4:6] / motion_scale
+
+    if not C.move_config_ablation_skip_global_comp:
+        global_comp = np.median(motion_xy_by_scale, axis=0)
+        global_comp_x, global_comp_y = global_comp
+
     for bbox in bboxes:
         # Get all MVs contained in the bbox
         mvs_in_bbox = crop_mvs_to_bbox(mvs, bbox)
@@ -48,12 +55,22 @@ def apply_mvs(bboxes, mvs, method):
         # src_x = dst_x + motion_x / motion_scale
         # Solve for dst using above
         # See: https://github.com/FFmpeg/FFmpeg/blob/a0ac49e38ee1d1011c394d7be67d0f08b2281526/libavutil/motion_vector.h
-        bbox_to_append = [
-            bbox[0] - motion_x_by_scale,  # x
-            bbox[1] - motion_y_by_scale,  # y
-            bbox[2],  # w
-            bbox[3],  # h
-        ]
+        if C.move_config_ablation_skip_global_comp:
+            bbox_to_append = [
+                bbox[0] - motion_x_by_scale,  # x
+                bbox[1] - motion_y_by_scale,  # y
+                bbox[2],  # w
+                bbox[3],  # h
+            ]
+
+        else:
+            bbox_to_append = [
+                bbox[0] - motion_x_by_scale + global_comp_x,  # x
+                bbox[1] - motion_y_by_scale + global_comp_y,  # y
+                bbox[2],  # w
+                bbox[3],  # h
+            ]
+
         out_bboxes.append(bbox_to_append)
         out_mvs.append(motion_xy_by_scale)
     return out_bboxes
@@ -98,6 +115,35 @@ def filter_bbox_mvs(mvs_in_bbox, method):
         else:
             motion_xy_by_scale = np.median(motion_xy_by_scale, axis=0)
 
+    elif method == "center_sample":
+        # recall mv -> [src_x, src_y, dst_x, dst_y, motion_x, motion_y, motion_scale]
+        xs = mvs_in_bbox[:, 0]
+        if len(xs) < 1:
+            motion_xy_by_scale = np.array([0, 0])
+            return motion_xy_by_scale
+
+        ys = mvs_in_bbox[:, 1]
+        if len(ys) < 1:
+            motion_xy_by_scale = np.array([0, 0])
+            return motion_xy_by_scale
+
+        # Compute the centroid
+        mean_xs = np.array([np.mean(xs)])
+        mean_ys = np.array([np.mean(ys)])
+        mean = np.expand_dims(np.concatenate([mean_xs, mean_ys], axis=0), axis=0)
+
+        # Compute index of the pair that minimizes l2 norm to centroid
+        xs = np.expand_dims(xs, axis=1)
+        ys = np.expand_dims(ys, axis=1)
+        xy_pairs = np.concatenate([xs, ys], axis=1)  # N, 2
+        mean = np.repeat(mean, len(xy_pairs), axis=0)  # N, 2
+        diff = (mean - xy_pairs) ** 2
+        euclidean = np.sum(diff, axis=1) ** (1 / 2)
+        min_idx = np.argmin(euclidean)
+
+        # Return the appropriate motion vector
+        motion_xy_by_scale = motion_xy_by_scale[min_idx]
+
     else:
         print("Undefined method, using median")
         motion_xy_by_scale = np.median(motion_xy_by_scale, axis=0)
@@ -118,6 +164,9 @@ def extract_mvs(frame):
 
     elif method == "flownet":
         mvs = flownet(frame, C.current_trace)
+
+    elif method == "lkdense":
+        mvs = lkdense(frame)
 
     return mvs
 
@@ -151,6 +200,35 @@ def rlof(curr_frame, last_frame):
         flow = cv2.optflow.calcOpticalFlowDenseRLOF(
             last_frame, curr_frame, None, gridStep=(16, 16)
         )
+        flow_x = flow[:, :, 0].reshape(-1)
+        flow_y = flow[:, :, 1].reshape(-1)
+
+        w, h, _ = flow.shape
+        src_x = np.arange(0, w)
+        src_y = np.arange(0, h)
+
+        arr = np.array(np.meshgrid(src_x, src_y)).T.reshape(-1, 2)
+        src_x, src_y = arr[:, 0], arr[:, 1]
+        dst_x, dst_y = src_x - flow_y, src_y - flow_y
+
+        src_x, src_y = np.expand_dims(src_x, axis=1), np.expand_dims(src_y, axis=1)
+        dst_x, dst_y = np.expand_dims(dst_x, axis=1), np.expand_dims(dst_y, axis=1)
+        flow_x, flow_y = np.expand_dims(flow_x, axis=1), np.expand_dims(flow_y, axis=1)
+
+        mvs = np.concatenate(
+            [src_x, src_y, dst_x, dst_y, flow_x, flow_y, np.ones(flow_x.shape)], axis=1
+        )
+
+    return mvs
+
+
+@rolling_frame
+def lkdense(curr_frame, last_frame):
+    mvs = np.array([])
+    if last_frame is not None:
+        last_frame = cv2.cvtColor(last_frame, cv2.COLOR_BGR2GRAY)
+        curr_frame = cv2.cvtColor(curr_frame, cv2.COLOR_BGR2GRAY)
+        flow = cv2.optflow.calcOpticalFlowSparseToDense(last_frame, curr_frame)
         flow_x = flow[:, :, 0].reshape(-1)
         flow_y = flow[:, :, 1].reshape(-1)
 

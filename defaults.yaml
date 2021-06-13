@@ -1,46 +1,47 @@
 app:
   mot_eval:
-    detections: "yolo960"
+    detections: ""
     path_to_mot_dir: "data"
-    results_dir: "results/yolo960/latency"
+    results_dir: "results/mot20_eval/lkdense/latency"
     subset:
       - "MOT20-01"
       - "MOT20-02"
       - "MOT20-03"
-        #- "MOT20-04"
       - "MOT20-05"
-        #- "MOT20-06"
-        #- "MOT20-07"
-        #- "MOT20-08"
+        #- "MOT16-02"
+        #- "MOT16-04"
+        #- "MOT16-05"
+        #- "MOT16-09"
+        #- "MOT16-10"
+        #- "MOT16-11"
+        #- "MOT16-13"
 
 move_config:
   bypass: False
-  #alpha_trim:
-  #  alpha: 0.1
-  motion_vector_method: "h26x" # [h26x, rlof, flownet]
+  motion_vector_method: "lkdense" # [h26x, rlof, lkdense, flownet]
+  aggregation_method: "median"
 
   ablation:
+    single_threaded: False
+    kth_frame: 5
+    skip_global_comp: False
     skip_perturbation: False
-
 
   dnn:
     simulator:
       latency_in_ms:
-        - 0
-        - 25
-        - 50
-        - 75
+        #- 0
+        #- 25
+        #- 50
+        #- 75
         - 100
         - 150
-        - 200
-        - 300
-        - 400
-        - 500
-        - 600
-        - 1000
+          #- 200
+          #- 300
+          #- 400
+          #- 500
+          #- 600
+          #- 1000
 
-  # TODO: implement ability to run on live DNN
-  # live:
-  #  triton_endpoint: 
 
 

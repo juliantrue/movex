@@ -5,8 +5,8 @@ import numpy as np
 
 
 def main():
-    mot_trace_name = "MOT20-03"
-    path_to_results_dir = "results/yolo416/latency0"
+    mot_trace_name = "MOT16-11"
+    path_to_results_dir = "results/mot16_eval/ds_detections_ablation/latency200"
     path_to_data_dir = "data"
 
     path_to_result_metadata_file = os.path.join(
@@ -18,7 +18,7 @@ def main():
     )
 
     video = video_generator(path_to_video_file)
-    render_video_with_metadata(video, metadata)
+    render_video_with_metadata(video, metadata, "out.mp4")
 
 
 def parse_result_metadata_file(path_to_result_metadata_file):
@@ -28,18 +28,32 @@ def parse_result_metadata_file(path_to_result_metadata_file):
     return metadata
 
 
-def render_video_with_metadata(video, metadata):
+def render_video_with_metadata(video, metadata, video_file_path=None):
     results = metadata["results"]
     results = np.array(results)
     bboxes_per_frame = bbox_generator(results)
+    video_writer = None
 
     for (ret, frame), bboxes in zip(video, bboxes_per_frame):
         if not ret:
             break
 
+        if video_file_path is not None and video_writer is None:
+            h, w, _ = frame.shape
+            video_writer = cv2.VideoWriter(
+                video_file_path, cv2.VideoWriter_fourcc(*"mp4v"), 25, (w, h)
+            )
+
         frame = render_bboxes_on_frame(frame, bboxes)
-        cv2.imshow(f"{metadata['trace_name']}", frame)
-        cv2.waitKey(25)
+
+        if video_writer is None:
+            cv2.imshow(f"{metadata['trace_name']}", frame)
+            cv2.waitKey(25)
+
+        else:
+            video_writer.write(frame)
+
+    video_writer.release()
 
 
 def video_generator(path_to_video_file):
@@ -69,6 +83,12 @@ def bbox_generator(results):
 
 
 def render_bboxes_on_frame(img, annotations):
+    try:
+        annotations[0][0]
+
+    except:
+        return img
+
     for bbox in annotations:
         bbox = list(map(lambda x: int(x), bbox))
         img = cv2.rectangle(img, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (0, 0, 255))

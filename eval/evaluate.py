@@ -4,12 +4,19 @@ import queue
 import av
 import cv2
 import pickle
+import numpy as np
 from fig import Config as C
 from tqdm import tqdm
 
 
 from accumulator import Accumulator
-from movex import MOTClient, extract_mvs, apply_mvs, apply_queue_of_mvs
+from movex import (
+    MOTClient,
+    SingleThreadedClientSim,
+    extract_mvs,
+    apply_mvs,
+    apply_queue_of_mvs,
+)
 
 
 def run_mot_eval(path_to_mot_dir, path_to_results_dir):
@@ -32,15 +39,21 @@ def run_mot_trace(path_to_trace_dir, path_to_results_dir):
     network = C.app_mot_eval_detections
     client_config = {
         "path_to_detections": os.path.join(
-            path_to_trace_dir, trace_name + f"-{network}" + ".npy"
+            path_to_trace_dir,
+            trace_name + f"{'-' + network if len(network) > 0 else ''}" + ".npy",
         ),
         "latency": C.move_config_dnn_simulator_latency_in_ms,
         "video_fps": video_source.streams.video[0].average_rate,
     }
-    detection_source = MOTClient(client_config)
+
+    if C.move_config_ablation_single_threaded:
+        detection_source = SingleThreadedClientSim(client_config)
+
+    else:
+        detection_source = MOTClient(client_config)
 
     print(f"Running tracking on {trace_name}.")
-    run_data = run_tracking(video_source, detection_source)
+    run_data = run_detection(video_source, detection_source)
     run_data["trace_name"] = trace_name
 
     if run_data["statistics"] is not None:
@@ -60,11 +73,11 @@ def read_video_source_and_set_read_settings(path_to_video):
     return video_source
 
 
-def run_tracking(video_source, detection_source):
-    """Runs tracking with MoVe Extrapolation based on a av.container video source and
+def run_detection(video_source, detection_source):
+    """Runs detection with MoVe Extrapolation based on a av.container video source and
     a detection source that implements `poll` behaviour."""
 
-    mv_filter_method = "median"
+    mv_filter_method = C.move_config_aggregation_method
     acc = Accumulator()
     acc.register(extract_mvs)
     acc.register(apply_queue_of_mvs)
@@ -111,16 +124,18 @@ def run_tracking(video_source, detection_source):
         loop_now = time.perf_counter()
         run_data["statistics"]["loop_time_samples"].append(loop_now - loop_last)
 
+        h, w, _ = img.shape
         track_ids = [-1] * len(curr_bboxes)
         for j in range(len(curr_bboxes)):
+            bbox = clamp_bbox_to_frame(curr_bboxes[j], (h, w))
             run_data["results"].append(
                 [
                     i,
                     track_ids[j],
-                    curr_bboxes[j][0],
-                    curr_bboxes[j][1],
-                    curr_bboxes[j][2],
-                    curr_bboxes[j][3],
+                    bbox[0],
+                    bbox[1],
+                    bbox[2],
+                    bbox[3],
                 ]
             )
 
@@ -138,6 +153,23 @@ def unpack_frame_to_img(frame):
     img = frame.to_ndarray(format="rgb24")
     img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
     return img
+
+
+def clamp_bbox_to_frame(bbox, img_shape):
+    h, w = img_shape
+    if bbox[0] < 0:
+        bbox[0] = 0
+
+    elif bbox[0] > w:
+        bbox[0] = w
+
+    if bbox[1] < 0:
+        bbox[1] = 0
+
+    elif bbox[1] > h:
+        bbox[1] = h
+
+    return bbox
 
 
 def post_process_statistics(statistics):

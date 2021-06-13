@@ -1,8 +1,9 @@
 import time
 import numpy as np
+from fig import Config as C
 
 
-class MOTClient(object):
+class SingleThreadedClientSim(object):
     def __init__(self, client_config):
         """Creates a new detection source that implements the `poll` function.
         Detections are for the MOT16 dataset, sourced from a Faster RCNN model.
@@ -10,26 +11,25 @@ class MOTClient(object):
         detections for a given call to `poll` if the latency time has elapsed.
         """
         self._latency_in_seconds = client_config["latency"] / 1000
-        self._frames_before_inference = int(
-            self._latency_in_seconds * client_config["video_fps"]
-        )
+
+        if C.move_config_ablation_kth_frame is None:
+            raise Exception("Kth frame must be defined in config")
+
+        self._frames_before_inference = C.move_config_ablation_kth_frame
         self._inference_countdown = self._frames_before_inference
         self._detections = np.load(client_config["path_to_detections"])
-
-        # The next_frame_index variable exists here in order to provide accurate sim
-        # as if the DNN took frames_before_inference number of frames to produce the result.
-        self._next_frame_idx = None
 
     def poll(self, frame_idx):
         """Indexes into the predefined dection matrix if enough time has elapsed to
         achieve the simulated latency. If enough time has not passed, return None."""
-        if self._next_frame_idx is None:
-            self._next_frame_idx = frame_idx
 
         if self._inference_countdown == 0:
-            detections = self._create_detections(self._next_frame_idx)
+            last = time.perf_counter()
+            detections = self._create_detections(frame_idx)
+            now = time.perf_counter()
+            created_detections_time = now - last
+            time.sleep(self._latency_in_seconds - created_detections_time)
             self._inference_countdown = self._frames_before_inference
-            self._next_frame_idx = frame_idx
 
         else:
             detections = None

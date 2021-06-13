@@ -3,7 +3,7 @@ import pandas as pd
 
 
 def main():
-    path_to_results = "results/baseline/preset_slow_median_no_bframes/results.csv"
+    path_to_results = "results/mot20_eval/baseline/results.csv"
 
     df = pd.read_csv(path_to_results)
 

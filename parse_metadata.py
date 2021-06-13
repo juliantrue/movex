@@ -36,6 +36,7 @@ def compute_eval_metadata(path_to_results_dir):
             cumulative_time,
             sum(peak_latency) / len(peak_latency),
         )
+
     except ZeroDivisionError as e:
         print("ZeroDivisionError: ", e)
         print(avg_avg_loop_time)
@@ -50,12 +51,13 @@ def metadata_file_paths_in_folder(path_to_results_dir):
         if os.path.isdir(path_to_potential_metadata_file):
             continue
 
-        elif (
-            result_file_split[1] == "metadata"
-            and result_file_split[0] in C.app_mot_eval_subset
-        ):
+        elif result_file_split[1] == "metadata":
             path_to_metadata_file = path_to_potential_metadata_file
             yield path_to_metadata_file
+
+        else:
+            # print(f"Skipping: {path_to_potential_metadata_file}")
+            pass
 
 
 def compute_total_run_time(accumulator):
