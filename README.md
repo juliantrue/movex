@@ -1,6 +1,6 @@
 # Overview
 This repo contains the accompanying code for our paper [Motion Extrapolation for Video Object Detection](https://arxiv.org/pdf/2104.08918.pdf) 
-accepted at the [Robust Video Scene Understanding: Tracking and Video Segmentation](https://eval.vision.rwth-aachen.de/rvsu-workshop21/) CVPR 2021 workshop.
+Best Paper Runner Up at the [Robust Video Scene Understanding: Tracking and Video Segmentation](https://eval.vision.rwth-aachen.de/rvsu-workshop21/) CVPR 2021 workshop.
 
 **WARNING**: __There is active work being done on this repository. We make no promises about its stability or backwards compatibility for the time being.__
 
