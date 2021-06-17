@@ -1,12 +1,12 @@
-import os
+import os, time
 import pickle
 import cv2
 import numpy as np
 
 
 def main():
-    mot_trace_name = "MOT16-11"
-    path_to_results_dir = "results/mot16_eval/ds_detections_ablation/latency200"
+    mot_trace_name = "MOT20-02"
+    path_to_results_dir = "results/mot20_eval/ablation/tenth_frame/latency150"
     path_to_data_dir = "data"
 
     path_to_result_metadata_file = os.path.join(
@@ -18,7 +18,8 @@ def main():
     )
 
     video = video_generator(path_to_video_file)
-    render_video_with_metadata(video, metadata, "out.mp4")
+    # render_video_with_metadata(video, metadata, "two_tenth_frame.mp4")
+    render_video_with_metadata_true_to_time(video, metadata, "two_tenth_frame.mp4")
 
 
 def parse_result_metadata_file(path_to_result_metadata_file):
@@ -56,6 +57,56 @@ def render_video_with_metadata(video, metadata, video_file_path=None):
     video_writer.release()
 
 
+def render_video_with_metadata_true_to_time(video, metadata, video_file_path=None):
+    results = metadata["results"]
+    results = np.array(results)
+
+    loop_times = metadata["statistics"]["loop_time_samples"]
+    loop_times = np.array(loop_times)
+    bboxes_per_frame = bbox_generator(results)
+    video_writer = None
+
+    fps = 25
+    frame_period = 1 / fps
+    frame_period_in_ms = int(frame_period * 1000)
+
+    for (ret, frame), bboxes, loop_time in zip(video, bboxes_per_frame, loop_times):
+        last = time.perf_counter()
+        if not ret:
+            break
+
+        if video_file_path is not None and video_writer is None:
+            h, w, _ = frame.shape
+            video_writer = cv2.VideoWriter(
+                video_file_path, cv2.VideoWriter_fourcc(*"mp4v"), fps, (w, h)
+            )
+
+        frame = render_bboxes_on_frame(frame, bboxes)
+
+        now = time.perf_counter()
+        delta_t = now - last
+
+        while delta_t < loop_time:
+            last = time.perf_counter()
+            if video_writer is None:
+                cv2.imshow(f"{metadata['trace_name']}", frame)
+                cv2.waitKey(frame_period_in_ms)
+
+            else:
+                video_writer.write(frame)
+            now = time.perf_counter()
+            delta_t += now - last
+
+        if video_writer is None:
+            cv2.imshow(f"{metadata['trace_name']}", frame)
+            cv2.waitKey(frame_period_in_ms)
+
+        else:
+            video_writer.write(frame)
+
+    video_writer.release()
+
+
 def video_generator(path_to_video_file):
     cap = cv2.VideoCapture(path_to_video_file)
     while True:
@@ -73,13 +124,19 @@ def bbox_generator(results):
     first_idx = frames_idxs[0]
     prelude = int(first_idx)
 
+    last_set = None
     for i in range(int(frames_idxs[-1])):
         bbox_idxs = np.where(frame_idxs_with_duplicates == i)
-        if len(bbox_idxs[0]) == 0:
+        if len(bbox_idxs[0]) == 0 and last_set is None:
             yield []
 
+        elif len(bbox_idxs[0]) == 0:
+            yield last_set
+
         else:
-            yield np.squeeze(bboxes_tlbr[bbox_idxs, :])
+            bboxes = np.squeeze(bboxes_tlbr[bbox_idxs, :])
+            last_set = bboxes
+            yield bboxes
 
 
 def render_bboxes_on_frame(img, annotations):
