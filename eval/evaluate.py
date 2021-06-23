@@ -32,8 +32,9 @@ def run_mot_trace(path_to_trace_dir, path_to_results_dir):
     and outputs the results to the `path_to_results_dir`"""
     trace_name = os.path.split(path_to_trace_dir)[1]
     C.current_trace = trace_name
+    encoding = "" if C.app_mot_eval_encoding == "" else "-" + C.app_mot_eval_encoding
     video_source = read_video_source_and_set_read_settings(
-        os.path.join(path_to_trace_dir, trace_name + ".mp4")
+        os.path.join(path_to_trace_dir, trace_name + encoding + ".mp4")
     )
 
     network = C.app_mot_eval_detections

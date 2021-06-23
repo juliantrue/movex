@@ -1,5 +1,5 @@
 CWD=${PWD}
-MOT_PATH=/home/julian/Datasets/MOT20
+MOT_PATH=/home/julian/Datasets/MOT16
 
 .PHONY: all
 all: build bash

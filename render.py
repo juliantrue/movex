@@ -5,8 +5,8 @@ import numpy as np
 
 
 def main():
-    mot_trace_name = "MOT20-02"
-    path_to_results_dir = "results/mot20_eval/ablation/tenth_frame/latency150"
+    mot_trace_name = "MOT16-10"
+    path_to_results_dir = "results/mot16_eval/temp/latency100"
     path_to_data_dir = "data"
 
     path_to_result_metadata_file = os.path.join(
@@ -19,7 +19,9 @@ def main():
 
     video = video_generator(path_to_video_file)
     # render_video_with_metadata(video, metadata, "two_tenth_frame.mp4")
-    render_video_with_metadata_true_to_time(video, metadata, "two_tenth_frame.mp4")
+    render_video_with_metadata_true_to_time(
+        video, metadata, f"{mot_trace_name}_rendering.mp4"
+    )
 
 
 def parse_result_metadata_file(path_to_result_metadata_file):
@@ -42,7 +44,7 @@ def render_video_with_metadata(video, metadata, video_file_path=None):
         if video_file_path is not None and video_writer is None:
             h, w, _ = frame.shape
             video_writer = cv2.VideoWriter(
-                video_file_path, cv2.VideoWriter_fourcc(*"mp4v"), 25, (w, h)
+                video_file_path, cv2.VideoWriter_fourcc(*"mp4v"), 30, (w, h)
             )
 
         frame = render_bboxes_on_frame(frame, bboxes)
