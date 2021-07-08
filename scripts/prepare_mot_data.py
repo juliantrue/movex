@@ -29,7 +29,7 @@ def convert_mot_trace(path_to_mot_trace, target_folder_path):
     metadata = extract_metadata(metadata_ini_path)
     images_path = os.path.join(path_to_mot_trace, "img1")
     target_video_path = os.path.join(
-        target_folder_path, os.path.split(target_folder_path)[-1] + "-hq" + ".mp4"
+        target_folder_path, os.path.split(target_folder_path)[-1] + "-lq" + ".mp4"
     )
     images_to_h264video(images_path, target_video_path, metadata)
 
@@ -76,6 +76,32 @@ def images_to_h264video(path_to_image_folder, video_out_path, metadata):
     #        f"{video_out_path}",
     #    ]
     # )
+    # command = " ".join(
+    #    [
+    #        "ffmpeg",
+    #        "-y",
+    #        f"-r {fps}",
+    #        f"-i {images_path}",
+    #        f"-vf scale=-2:{height}",
+    #        "-vcodec libx264",
+    #        "-preset slow",
+    #        "-pix_fmt yuv420p",
+    #        f"{video_out_path}",
+    #    ]
+    # )
+    # command = " ".join(
+    #    [
+    #        "ffmpeg",
+    #        "-y",
+    #        f"-r {fps}",
+    #        f"-i {images_path}",
+    #        f"-vf scale=-2:{height}",
+    #        "-vcodec libx264",
+    #        "-preset medium",
+    #        "-pix_fmt yuv420p",
+    #        f"{video_out_path}",
+    #    ]
+    # )
     command = " ".join(
         [
             "ffmpeg",
@@ -84,7 +110,7 @@ def images_to_h264video(path_to_image_folder, video_out_path, metadata):
             f"-i {images_path}",
             f"-vf scale=-2:{height}",
             "-vcodec libx264",
-            "-preset slow",
+            "-preset fast",
             "-pix_fmt yuv420p",
             f"{video_out_path}",
         ]
