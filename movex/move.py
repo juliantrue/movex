@@ -35,7 +35,6 @@ def apply_mvs(bboxes, mvs, method):
     motion_xy_by_scale = mvs[:, 4:6] / motion_scale
 
     if not C.move_config_ablation_skip_global_comp:
-        print("computing gc")
         global_comp = np.median(motion_xy_by_scale, axis=0)
         global_comp_x, global_comp_y = global_comp
 
@@ -65,7 +64,6 @@ def apply_mvs(bboxes, mvs, method):
             ]
 
         else:
-            print("applying gc")
             bbox_to_append = [
                 bbox[0] - motion_x_by_scale + global_comp_x,  # x
                 bbox[1] - motion_y_by_scale + global_comp_y,  # y
